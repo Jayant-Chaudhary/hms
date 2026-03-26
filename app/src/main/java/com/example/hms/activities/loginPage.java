@@ -12,11 +12,13 @@ import com.example.hms.auth.authManager;
 import com.google.android.gms.auth.api.signin.*;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseUser;
 
 public class loginPage extends AppCompatActivity {
 
     private static final String TAG = "loginPage";
     private static final int RC_SIGN_IN = 100;
+    private static final String ADMIN_EMAIL = "jayant10chaudhary@gmail.com"; // Set your specific admin email here
 
     EditText email, password;
     Button loginBtn, googleBtn;
@@ -59,8 +61,7 @@ public class loginPage extends AppCompatActivity {
             authManager.login(emailStr, passStr, new authManager.Authcallback() {
                 @Override
                 public void onSuccess() {
-                    startActivity(new Intent(loginPage.this, MainActivity.class));
-                    finish();
+                    handleUserRedirection();
                 }
 
                 @Override
@@ -82,6 +83,19 @@ public class loginPage extends AppCompatActivity {
         });
     }
 
+    private void handleUserRedirection() {
+        FirebaseUser user = authManager.getAuth().getCurrentUser();
+        if (user != null) {
+            String userEmail = user.getEmail();
+            if (userEmail != null && userEmail.equalsIgnoreCase(ADMIN_EMAIL)) {
+                startActivity(new Intent(loginPage.this, AdminDashboardActivity.class));
+            } else {
+                startActivity(new Intent(loginPage.this, MainActivity.class)); // Customer Dashboard
+            }
+            finish();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -96,12 +110,10 @@ public class loginPage extends AppCompatActivity {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
 
-            // Signed in successfully, now authenticate with Firebase
             authManager.loginwithgoogle(account.getIdToken(), new authManager.Authcallback() {
                 @Override
                 public void onSuccess() {
-                    startActivity(new Intent(loginPage.this, MainActivity.class));
-                    finish();
+                    handleUserRedirection();
                 }
 
                 @Override
@@ -111,10 +123,8 @@ public class loginPage extends AppCompatActivity {
             });
 
         } catch (ApiException e) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Common codes: 10 (Developer Error - usually SHA-1/Client ID), 12500, etc.
             Log.e(TAG, "signInResult:failed code=" + e.getStatusCode());
-            Toast.makeText(this, "Google Sign-In failed (Code: " + e.getStatusCode() + "). Check Logcat for details.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Google Sign-In failed (Code: " + e.getStatusCode() + ")", Toast.LENGTH_LONG).show();
         }
     }
 }

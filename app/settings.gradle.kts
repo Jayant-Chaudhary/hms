@@ -1,24 +1,22 @@
+// settings.gradle.kts  (project root)
+
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        // Required for MPAndroidChart
         maven { url = uri("https://jitpack.io") }
     }
 }
 
-rootProject.name = "Hms"
+rootProject.name = "YourGymApp"
 include(":app")

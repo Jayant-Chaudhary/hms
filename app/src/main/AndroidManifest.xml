@@ -29,6 +29,22 @@
             android:name=".MainActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.AdminDashboardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ManageRolesActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.RevenueActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.AttendanceActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
