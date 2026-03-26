@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "427505262288",
+    "project_id": "hotel-management-system-81e65",
+    "storage_bucket": "hotel-management-system-81e65.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:427505262288:android:d84ab8188198673c11c8d5",
+        "android_client_info": {
+          "package_name": "com.example.hms"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "427505262288-sjl2mjjrilmiriohj8fb0r79mkcb6ddc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDi1vPF2vlGGcVgJ326ndtd55SXpctT84w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "427505262288-sjl2mjjrilmiriohj8fb0r79mkcb6ddc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
