@@ -28,6 +28,15 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+        <activity
+            android:name=".activities.CustomerDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.ReceptionDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.AdminDashboardActivity"
+            android:exported="false" />
 
     </application>
 
