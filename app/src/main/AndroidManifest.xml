@@ -37,6 +37,8 @@
         <activity
             android:name=".activities.AdminDashboardActivity"
             android:exported="false" />
+        <activity android:name=".activities.AddCategoryActivity" />
+        <activity android:name=".activities.AddTransactionActivity" />
 
     </application>
 
