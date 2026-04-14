@@ -111,7 +111,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Analytics"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:background="@drawable/rounded_button_outline" />
 
@@ -121,7 +121,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Room Layout Manager"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:background="@drawable/rounded_button_outline" />
 
@@ -131,7 +131,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Role Access Manager"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:background="@drawable/rounded_button_outline" />
 
@@ -141,7 +141,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Stay Monitor"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:background="@drawable/rounded_button_outline" />
 
@@ -151,7 +151,7 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Customer Data"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:background="@drawable/rounded_button_outline" />
     </LinearLayout>

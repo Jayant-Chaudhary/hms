@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public final class RoomInventoryLoader {
@@ -28,7 +30,7 @@ public final class RoomInventoryLoader {
                 .get()
                 .addOnSuccessListener(roomSnapshots -> {
                     if (roomSnapshots == null || roomSnapshots.isEmpty()) {
-                        callback.onLoaded(new ArrayList<>());
+                        callback.onLoaded(HotelRoom.mockInventory());
                         return;
                     }
                     List<RoomSeed> seeds = new ArrayList<>();
@@ -44,11 +46,13 @@ public final class RoomInventoryLoader {
                             continue;
                         }
                         RoomSeed seed = new RoomSeed();
-                        seed.id = roomId;
+                        seed.id = doc.getId();
+                        seed.bookingRoomId = roomId;
                         seed.label = roomId;
                         seed.floor = asInt(doc.get("floor"), 0);
                         seed.maxAdults = Math.max(1, asInt(doc.get("capacityAdults"), 1));
-                        seed.pricePerNight = Math.max(0, asInt(doc.get("pricePerNight"), 0));
+                        int parsedPrice = asInt(doc.get("pricePerNight"), 0);
+                        seed.pricePerNight = parsedPrice > 0 ? parsedPrice : defaultPrice(seed.maxAdults);
                         seeds.add(seed);
                     }
                     if (seeds.isEmpty()) {
@@ -74,12 +78,17 @@ public final class RoomInventoryLoader {
                                 }
 
                                 List<HotelRoom> rooms = new ArrayList<>();
+                                Map<String, Integer> labelCounts = new HashMap<>();
                                 for (RoomSeed seed : seeds) {
-                                    boolean booked = occupied.contains(seed.id.trim().toLowerCase(Locale.ROOT));
+                                    boolean booked = false;
+                                    int duplicateCount = labelCounts.getOrDefault(seed.label, 0);
+                                    labelCounts.put(seed.label, duplicateCount + 1);
+                                    String safeLabel = duplicateCount == 0 ? seed.label : seed.label + " (" + (duplicateCount + 1) + ")";
                                     rooms.add(new HotelRoom(
                                             seed.id,
+                                            seed.bookingRoomId,
                                             seed.floor,
-                                            seed.label,
+                                            safeLabel,
                                             seed.maxAdults,
                                             seed.pricePerNight,
                                             booked
@@ -115,8 +124,13 @@ public final class RoomInventoryLoader {
         return fallback;
     }
 
+    private static int defaultPrice(int maxAdults) {
+        return Math.max(1800, maxAdults * 1200);
+    }
+
     private static class RoomSeed {
         String id;
+        String bookingRoomId;
         String label;
         int floor;
         int maxAdults;

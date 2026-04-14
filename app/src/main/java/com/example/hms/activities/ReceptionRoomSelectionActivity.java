@@ -94,10 +94,10 @@ public class ReceptionRoomSelectionActivity extends AppCompatActivity {
 
         for (Map.Entry<Integer, List<HotelRoom>> e : byFloor.entrySet()) {
             TextView floorTitle = new TextView(this);
-            floorTitle.setText("Floor " + e.getKey());
+            floorTitle.setText(floorTitle(e.getKey()));
             floorTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             floorTitle.setTypeface(null, Typeface.BOLD);
-            floorTitle.setTextColor(0xFF1A1A2E);
+            floorTitle.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             LinearLayout.LayoutParams ftp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -138,16 +138,29 @@ public class ReceptionRoomSelectionActivity extends AppCompatActivity {
         return r.label + "\nMax " + r.maxAdults + " adults" + (r.booked ? "\nBooked" : "");
     }
 
+    private static String floorTitle(int floor) {
+        if (floor <= 0) {
+            return "Ground Floor";
+        }
+        if (floor == 1) {
+            return "First Floor";
+        }
+        if (floor == 2) {
+            return "Second Floor";
+        }
+        return "Floor " + floor;
+    }
+
     private void applyRoomStyle(TextView cell, HotelRoom room) {
         if (room.booked) {
             cell.setBackgroundResource(R.drawable.bg_room_booked);
-            cell.setTextColor(0xFF888888);
+            cell.setTextColor(ContextCompat.getColor(this, R.color.room_booked_text));
             cell.setClickable(false);
             return;
         }
         boolean sel = selectedIds.contains(room.id);
         cell.setBackgroundResource(sel ? R.drawable.bg_room_selected : R.drawable.bg_room_available);
-        cell.setTextColor(ContextCompat.getColor(this, android.R.color.black));
+        cell.setTextColor(ContextCompat.getColor(this, sel ? R.color.room_selected_text : R.color.room_available_text));
         cell.setClickable(true);
     }
 
