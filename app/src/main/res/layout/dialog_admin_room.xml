@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <EditText
+        android:id="@+id/etRoomId"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Room ID (e.g. 201)"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+
+    <EditText
+        android:id="@+id/etFloor"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:hint="Floor"
+        android:inputType="number"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+
+    <EditText
+        android:id="@+id/etCapAdults"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:hint="Adult capacity"
+        android:inputType="number"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+
+    <EditText
+        android:id="@+id/etCapChildren"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:hint="Children capacity"
+        android:inputType="number"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+
+    <EditText
+        android:id="@+id/etPricePerNight"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:hint="Price per night"
+        android:inputType="number"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+</LinearLayout>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <EditText
+        android:id="@+id/etRoleEmail"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="User email"
+        android:inputType="textEmailAddress"
+        android:background="@drawable/rounded_edittext"
+        android:paddingHorizontal="12dp" />
+
+    <Spinner
+        android:id="@+id/spinnerRole"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_edittext" />
+</LinearLayout>

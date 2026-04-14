@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text_primary">#E6EAF2</color>
+    <color name="text_secondary">#B0B8C4</color>
+    <color name="dashboard_outline_text">#9CC5FF</color>
+</resources>

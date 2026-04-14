@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_page_gradient"
+    android:fillViewport="true"
+    android:scrollbars="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Customer registration"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_hero_gradient"
+            android:padding="18dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Full name"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Guest name"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:inputType="textPersonName"
+            android:imeOptions="actionNext"
+            android:singleLine="true"
+            android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gender"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <Spinner
+            android:id="@+id/spinnerGender"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/rounded_edittext"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mobile number"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/etMobile"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="10-digit mobile"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:inputType="phone"
+            android:imeOptions="actionNext"
+            android:singleLine="true"
+            android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Email address"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:inputType="textEmailAddress"
+            android:imeOptions="actionNext"
+            android:singleLine="true"
+            android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Government ID type"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <Spinner
+            android:id="@+id/spinnerGovIdType"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/rounded_edittext"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
+
+        <EditText
+            android:id="@+id/etOtherGovIdType"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:hint="Enter government ID type"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:inputType="text"
+            android:imeOptions="actionNext"
+            android:singleLine="true"
+            android:visibility="gone"
+            android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Government ID number"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/etGovIdNumber"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="ID number"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:inputType="text"
+            android:imeOptions="actionNext"
+            android:singleLine="true"
+            android:background="@drawable/rounded_edittext" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Adults"
+                    android:textSize="14sp"
+                    android:textColor="#1565C0" />
+
+                <EditText
+                    android:id="@+id/etAdults"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:hint="1"
+                    android:textColorHint="#AAAAAA"
+                    android:textColor="#333333"
+                    android:textSize="14sp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:layout_marginTop="6dp"
+                    android:inputType="number"
+                    android:imeOptions="actionNext"
+                    android:singleLine="true"
+                    android:background="@drawable/rounded_edittext" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Children"
+                    android:textSize="14sp"
+                    android:textColor="#1565C0" />
+
+                <EditText
+                    android:id="@+id/etChildren"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:hint="0"
+                    android:textColorHint="#AAAAAA"
+                    android:textColor="#333333"
+                    android:textSize="14sp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:layout_marginTop="6dp"
+                    android:inputType="number"
+                    android:imeOptions="actionNext"
+                    android:singleLine="true"
+                    android:background="@drawable/rounded_edittext" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check-in date"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/etCheckIn"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Tap to choose"
+            android:focusable="false"
+            android:clickable="true"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check-out date"
+            android:textSize="14sp"
+            android:textColor="#1565C0"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/etCheckOut"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Tap to choose"
+            android:focusable="false"
+            android:clickable="true"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/rounded_edittext" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnConfirmSelectRoom"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Confirm and select room"
+                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:background="@drawable/rounded_button" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="26dp"
+            android:text="Thanks for booking • Hotel Management System"
+            android:textColor="#6D4C9C"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+
+    </LinearLayout>
+</ScrollView>
