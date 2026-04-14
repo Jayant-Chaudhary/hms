@@ -200,8 +200,8 @@
             android:layout_height="52dp"
             android:text="Sign in with Google"
             android:textSize="16sp"
-            android:textColor="#333333"
-            android:background="@drawable/rounded_edittext"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/rounded_button"
             android:layout_marginTop="20dp"
             android:drawableStart="@android:drawable/ic_menu_gallery"
             android:paddingStart="20dp" />

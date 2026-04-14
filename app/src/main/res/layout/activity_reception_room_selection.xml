@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textSize="14sp"
-            android:textColor="#203A7A"
+            android:textColor="@color/text_primary"
             android:text="Adults to accommodate: 1" />
 
         <TextView
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="14sp"
-            android:textColor="#1565C0"
+            android:textColor="@color/dashboard_outline_text"
             android:text="Selected room capacity: 0" />
 
         <TextView
@@ -46,7 +46,7 @@
             android:layout_marginTop="12dp"
             android:text="Booked rooms are greyed. Tap free rooms to select. Total capacity of selected rooms must be at least the number of adults."
             android:textSize="13sp"
-            android:textColor="#777777" />
+            android:textColor="@color/text_secondary" />
 
         <LinearLayout
             android:id="@+id/llRoomFloors"
@@ -73,7 +73,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="26dp"
             android:text="Thanks for booking • Hotel Management System"
-            android:textColor="#6D4C9C"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:textStyle="italic" />
 

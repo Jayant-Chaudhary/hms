@@ -60,8 +60,10 @@ public class ReceptionPaymentActivity extends AppCompatActivity {
             @Override
             public void onError(Exception e) {
                 Toast.makeText(ReceptionPaymentActivity.this,
-                        "Could not load room prices from server.",
+                        "Could not load room prices from server. Using offline room prices.",
                         Toast.LENGTH_LONG).show();
+                allRooms = HotelRoom.mockInventory();
+                recomputeSummary(tvSummary, tvTotal);
             }
         });
 
@@ -132,6 +134,11 @@ public class ReceptionPaymentActivity extends AppCompatActivity {
             Toast.makeText(this, "Unable to calculate total from live room layout.", Toast.LENGTH_LONG).show();
             return;
         }
+        List<String> bookingRoomIds = new ArrayList<>();
+        for (String selectedId : draft.selectedRoomIds) {
+            HotelRoom room = HotelRoom.findById(selectedId, allRooms);
+            bookingRoomIds.add(room != null ? room.bookingRoomId : selectedId);
+        }
         BookingDataSync.saveBookingAndCustomer(
                 txnRef,
                 draft.customerName,
@@ -143,7 +150,7 @@ public class ReceptionPaymentActivity extends AppCompatActivity {
                 draft.children,
                 draft.checkInMillis,
                 draft.checkOutMillis,
-                draft.selectedRoomIds,
+                bookingRoomIds,
                 allRooms,
                 totalInr,
                 paymentMethod,

@@ -77,7 +77,7 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/rounded_button_outline"
             android:text="Log out"
-            android:textColor="#1565C0"
+            android:textColor="#FFFFFF"
             android:textStyle="bold" />
 
         <TextView
