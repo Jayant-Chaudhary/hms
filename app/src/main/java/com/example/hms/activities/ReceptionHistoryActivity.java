@@ -47,7 +47,6 @@ public class ReceptionHistoryActivity extends AppCompatActivity {
         FirebaseFirestore.getInstance()
                 .collection("bookings")
                 .whereEqualTo("status", "checked_out")
-                .orderBy("checkOut", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     items.clear();

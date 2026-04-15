@@ -61,7 +61,7 @@ public final class RoomInventoryLoader {
                         return;
                     }
                     db.collection("bookings")
-                            .whereIn("status", Arrays.asList("booked", "in_house", "due_checkout"))
+                            .whereIn("status", Arrays.asList("confirmed", "booked", "in_house", "due_checkout"))
                             .get()
                             .addOnSuccessListener(bookingSnapshots -> {
                                 Set<String> occupied = new HashSet<>();

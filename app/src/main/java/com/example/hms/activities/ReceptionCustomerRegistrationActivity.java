@@ -46,6 +46,15 @@ public class ReceptionCustomerRegistrationActivity extends AppCompatActivity {
         spinnerGender = findViewById(R.id.spinnerGender);
         spinnerGovIdType = findViewById(R.id.spinnerGovIdType);
 
+        // Pre-fill from draft (if initiated from Customer Dashboard)
+        ReceptionBookingDraft draft = ReceptionBookingDraft.get();
+        if (draft.email != null && !draft.email.isEmpty()) {
+            etEmail.setText(draft.email);
+        }
+        if (draft.customerName != null && !draft.customerName.isEmpty()) {
+            etName.setText(draft.customerName);
+        }
+
         ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item,
                 new String[]{"Male", "Female", "Other"});

@@ -48,33 +48,48 @@ public class CustomerNotificationsActivity extends AppCompatActivity {
             return;
         }
         String customerId = email.trim().toLowerCase(Locale.ROOT).replace(".", "_");
-        FirebaseFirestore.getInstance()
-                .collection("bookings")
+        
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // 1. Fetch Real-time Notifications
+        db.collection("notifications")
                 .whereEqualTo("customerId", customerId)
                 .get()
-                .addOnSuccessListener(qs -> {
+                .addOnSuccessListener(nq -> {
                     llNotifications.removeAllViews();
-                    if (qs.isEmpty()) {
-                        tvNotificationsEmpty.setVisibility(View.VISIBLE);
-                        tvNotificationsEmpty.setText("No notifications yet.");
-                        return;
+                    boolean hasContent = !nq.isEmpty();
+                    
+                    for (com.google.firebase.firestore.DocumentSnapshot d : nq.getDocuments()) {
+                        addNotificationCard(d.getString("title"), d.getString("message"));
                     }
-                    tvNotificationsEmpty.setVisibility(View.GONE);
-                    long now = System.currentTimeMillis();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
-                        String bookingRef = value(doc.get("transactionRef"));
-                        String status = value(doc.get("status"));
-                        Timestamp checkOut = doc.getTimestamp("checkOut");
-                        long daysLeft = -1;
-                        if (checkOut != null) {
-                            daysLeft = TimeUnit.MILLISECONDS.toDays(checkOut.toDate().getTime() - now);
-                        }
-                        String message = "Booking " + bookingRef + " is currently " + status + ".";
-                        if (daysLeft >= 0 && daysLeft <= 2) {
-                            message += " Checkout is in " + daysLeft + " day(s).";
-                        }
-                        addNotificationCard(message);
-                    }
+
+                    // 2. Fetch Booking Status Alerts (Legacy)
+                    db.collection("bookings")
+                            .whereEqualTo("customerId", customerId)
+                            .get()
+                            .addOnSuccessListener(qs -> {
+                                if (qs.isEmpty() && !hasContent) {
+                                    tvNotificationsEmpty.setVisibility(View.VISIBLE);
+                                    tvNotificationsEmpty.setText("No notifications yet.");
+                                    return;
+                                }
+                                tvNotificationsEmpty.setVisibility(View.GONE);
+                                long now = System.currentTimeMillis();
+                                for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
+                                    String bookingRef = value(doc.get("transactionRef"));
+                                    String status = value(doc.get("status"));
+                                    Timestamp checkOut = doc.getTimestamp("checkOut");
+                                    long daysLeft = -1;
+                                    if (checkOut != null) {
+                                        daysLeft = TimeUnit.MILLISECONDS.toDays(checkOut.toDate().getTime() - now);
+                                    }
+                                    
+                                    if ("pending_validation".equalsIgnoreCase(status)) {
+                                         addNotificationCard("Pending Validation", "Your booking " + bookingRef + " is waiting for reception approval.");
+                                    } else if (daysLeft >= 0 && daysLeft <= 2) {
+                                         addNotificationCard("Stay Status", "Booking " + bookingRef + " is active. Checkout is in " + daysLeft + " day(s).");
+                                    }
+                                }
+                            });
                 })
                 .addOnFailureListener(e -> {
                     tvNotificationsEmpty.setVisibility(View.VISIBLE);
@@ -82,20 +97,38 @@ public class CustomerNotificationsActivity extends AppCompatActivity {
                 });
     }
 
-    private void addNotificationCard(String message) {
-        TextView item = new TextView(this);
-        item.setBackgroundResource(R.drawable.bg_dashboard_card);
-        item.setText(message);
-        item.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
-        item.setTextSize(14f);
-        item.setPadding(22, 16, 22, 16);
+    private void addNotificationCard(String title, String message) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(R.drawable.bg_dashboard_card);
+        card.setPadding(32, 24, 32, 24);
+        
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        lp.topMargin = 12;
-        item.setLayoutParams(lp);
-        llNotifications.addView(item);
+        lp.topMargin = 16;
+        card.setLayoutParams(lp);
+
+        if (title != null) {
+            TextView tvTitle = new TextView(this);
+            tvTitle.setText(title.toUpperCase(Locale.ROOT));
+            tvTitle.setTextColor(ContextCompat.getColor(this, R.color.primary));
+            tvTitle.setTextSize(12);
+            tvTitle.setAlpha(0.8f);
+            tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+            card.addView(tvTitle);
+        }
+
+        TextView tvMsg = new TextView(this);
+        tvMsg.setText(message);
+        tvMsg.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        tvMsg.setTextSize(14);
+        tvMsg.setLineSpacing(0, 1.2f);
+        if (title != null) tvMsg.setPadding(0, 4, 0, 0);
+        card.addView(tvMsg);
+
+        llNotifications.addView(card);
     }
 
     private String value(Object value) {

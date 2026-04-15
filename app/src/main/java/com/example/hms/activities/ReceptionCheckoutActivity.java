@@ -109,8 +109,8 @@ public class ReceptionCheckoutActivity extends AppCompatActivity {
                 }
             });
 
-            // "Add Extra" functionality can be added here if needed later
-            h.btnAddExtra.setOnClickListener(v -> Toast.makeText(ReceptionCheckoutActivity.this, "Feature coming soon: Add minibar/laundry", Toast.LENGTH_SHORT).show());
+            // "Add Extra" functionality
+            h.btnAddExtra.setOnClickListener(v -> showAddExtraDialog(b.id));
         }
 
         @Override public int getItemCount() { return inHouseGuests.size(); }
@@ -133,6 +133,40 @@ public class ReceptionCheckoutActivity extends AppCompatActivity {
     private String formatDate(com.google.firebase.Timestamp ts) {
         if (ts == null) return "-";
         return new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(ts.toDate());
+    }
+
+    private void showAddExtraDialog(String bookingId) {
+        android.widget.EditText etAmount = new android.widget.EditText(this);
+        etAmount.setHint("Amount (₹)");
+        etAmount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        
+        android.widget.EditText etNote = new android.widget.EditText(this);
+        etNote.setHint("Note (e.g. Minibar, Laundry)");
+        
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 0);
+        layout.addView(etAmount);
+        layout.addView(etNote);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Add Extra Charge")
+                .setView(layout)
+                .setPositiveButton("Add", (dialog, which) -> {
+                    String amountStr = etAmount.getText().toString();
+                    String note = etNote.getText().toString();
+                    if (!amountStr.isEmpty()) {
+                        double amount = Double.parseDouble(amountStr);
+                        BookingDataSync.appendExtraCharge(bookingId, amount, note)
+                                .addOnSuccessListener(unused -> {
+                                    Toast.makeText(this, "Charge added", Toast.LENGTH_SHORT).show();
+                                    loadInHouseGuests();
+                                })
+                                .addOnFailureListener(e -> Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override

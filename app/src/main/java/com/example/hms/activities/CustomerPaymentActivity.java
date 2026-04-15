@@ -157,6 +157,7 @@ public class CustomerPaymentActivity extends AppCompatActivity {
                 "customer"
         ).addOnSuccessListener(unused -> {
             ReceptionBookingDraft.reset();
+            Toast.makeText(this, "Booking submitted. Reception will validate your payment shortly.", Toast.LENGTH_LONG).show();
             Intent i = new Intent(this, CustomerDashboardActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);

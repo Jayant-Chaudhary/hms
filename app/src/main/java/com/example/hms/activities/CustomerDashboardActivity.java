@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.core.widget.NestedScrollView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.hms.R;
 import com.example.hms.utils.ReceptionBookingDraft;
@@ -48,13 +49,16 @@ public class CustomerDashboardActivity extends AppCompatActivity {
     private TextView tvHotelLocationLabel;
     private TextView tvCurrentBookingsEmpty;
     private TextView tvPreviousBookingsEmpty;
+    private TextView tvPendingBookingsEmpty;
     private LinearLayout llCurrentBookings;
     private LinearLayout llPreviousBookings;
+    private LinearLayout llPendingBookings;
 
     private NestedScrollView scrollDashboard;
     private View sectionHome;
     private View sectionBookings;
     private View sectionProfile;
+    private com.google.firebase.firestore.ListenerRegistration bookingListener;
 
     private LinearLayout navTabHome;
     private LinearLayout navTabBookings;
@@ -65,6 +69,7 @@ public class CustomerDashboardActivity extends AppCompatActivity {
     private ImageView navIconHome;
     private ImageView navIconBookings;
     private ImageView navIconProfile;
+    private SwipeRefreshLayout swipeRefresh;
 
     private CustomerProfileStore profileStore;
     private String userEmail;
@@ -88,8 +93,10 @@ public class CustomerDashboardActivity extends AppCompatActivity {
         tvHotelLocationLabel = findViewById(R.id.tvHotelLocationLabel);
         tvCurrentBookingsEmpty = findViewById(R.id.tvCurrentBookingsEmpty);
         tvPreviousBookingsEmpty = findViewById(R.id.tvPreviousBookingsEmpty);
+        tvPendingBookingsEmpty = findViewById(R.id.tvPendingBookingsEmpty);
         llCurrentBookings = findViewById(R.id.llCurrentBookings);
         llPreviousBookings = findViewById(R.id.llPreviousBookings);
+        llPendingBookings = findViewById(R.id.llPendingBookings);
 
         scrollDashboard = findViewById(R.id.scrollDashboard);
         sectionHome = findViewById(R.id.sectionHome);
@@ -105,6 +112,14 @@ public class CustomerDashboardActivity extends AppCompatActivity {
         navIconHome = findViewById(R.id.navIconHome);
         navIconBookings = findViewById(R.id.navIconBookings);
         navIconProfile = findViewById(R.id.navIconProfile);
+        swipeRefresh = findViewById(R.id.swipeRefreshCustomer);
+
+        if (swipeRefresh != null) {
+            swipeRefresh.setOnRefreshListener(() -> {
+                loadBookings();
+                loadHotelLocation();
+            });
+        }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         userEmail = user != null && user.getEmail() != null ? user.getEmail() : sessionManager.getEmail();
@@ -122,6 +137,8 @@ public class CustomerDashboardActivity extends AppCompatActivity {
         findViewById(R.id.btnBookRoom).setOnClickListener(v -> {
             ReceptionBookingDraft.reset();
             ReceptionBookingDraft.get().createdByRole = "customer";
+            ReceptionBookingDraft.get().email = userEmail;
+            ReceptionBookingDraft.get().customerName = profileStore.getName();
             startActivity(new Intent(this, ReceptionCustomerRegistrationActivity.class));
         });
         
@@ -133,8 +150,7 @@ public class CustomerDashboardActivity extends AppCompatActivity {
         findViewById(R.id.btnShowLocation).setOnClickListener(v -> openHotelLocation());
         findViewById(R.id.btnCustomerSettings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
-        findViewById(R.id.btnNotifications).setOnClickListener(v ->
-                startActivity(new Intent(this, CustomerNotificationsActivity.class)));
+        
         findViewById(R.id.btnEditProfile).setOnClickListener(v -> showEditProfileDialog());
         findViewById(R.id.btnEditProfileHero).setOnClickListener(v -> showEditProfileDialog());
 
@@ -259,46 +275,68 @@ public class CustomerDashboardActivity extends AppCompatActivity {
     }
 
     private void loadBookings() {
-        llCurrentBookings.removeAllViews();
-        llPreviousBookings.removeAllViews();
+        if (bookingListener != null) bookingListener.remove();
+        
         if (userEmail == null || userEmail.isEmpty()) {
-            tvCurrentBookingsEmpty.setText(R.string.no_active_bookings);
-            tvPreviousBookingsEmpty.setText(R.string.no_previous_bookings);
+            llCurrentBookings.removeAllViews();
+            llPreviousBookings.removeAllViews();
+            llPendingBookings.removeAllViews();
             tvCurrentBookingsEmpty.setVisibility(View.VISIBLE);
             tvPreviousBookingsEmpty.setVisibility(View.VISIBLE);
+            tvPendingBookingsEmpty.setVisibility(View.VISIBLE);
             return;
         }
-        String customerId = userEmail.trim().toLowerCase(Locale.ROOT).replace(".", "_");
-        FirebaseFirestore.getInstance()
+
+        String emailId = userEmail.trim().toLowerCase(Locale.ROOT);
+        String legacyId = emailId.replace(".", "_");
+
+        bookingListener = FirebaseFirestore.getInstance()
                 .collection("bookings")
-                .whereEqualTo("customerId", customerId)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .whereIn("customerId", java.util.Arrays.asList(emailId, legacyId))
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    
+                    if (e != null) {
+                        Toast.makeText(this, "Sync Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (querySnapshot == null) return;
+
+                    int totalFound = querySnapshot.size();
+                    // Diagnostic Toast for debug
+                    Toast.makeText(this, "Query ID: " + emailId + " | Found: " + totalFound, Toast.LENGTH_SHORT).show();
+
+                    llCurrentBookings.removeAllViews();
+                    llPreviousBookings.removeAllViews();
+                    llPendingBookings.removeAllViews();
+
+                    List<DocumentSnapshot> pending = new ArrayList<>();
                     List<DocumentSnapshot> current = new ArrayList<>();
                     List<DocumentSnapshot> previous = new ArrayList<>();
                     long now = System.currentTimeMillis();
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Timestamp out = doc.getTimestamp("checkOut");
                         long checkoutMillis = out != null ? out.toDate().getTime() : 0L;
                         String status = doc.getString("status");
-                        if ("checked_out".equalsIgnoreCase(status)
+                        
+                        if ("pending_validation".equalsIgnoreCase(status)) {
+                            pending.add(doc);
+                        } else if ("checked_out".equalsIgnoreCase(status)
                                 || (checkoutMillis > 0 && checkoutMillis < now)) {
                             previous.add(doc);
                         } else {
                             current.add(doc);
                         }
                     }
+
+                    renderBookingSection(llPendingBookings, tvPendingBookingsEmpty, pending,
+                            getString(R.string.no_pending_bookings));
                     renderBookingSection(llCurrentBookings, tvCurrentBookingsEmpty, current,
                             getString(R.string.no_active_bookings));
                     renderBookingSection(llPreviousBookings, tvPreviousBookingsEmpty, previous,
                             getString(R.string.no_previous_bookings));
-                })
-                .addOnFailureListener(e -> {
-                    tvCurrentBookingsEmpty.setText("Unable to load current bookings.");
-                    tvPreviousBookingsEmpty.setText("Unable to load previous bookings.");
-                    tvCurrentBookingsEmpty.setVisibility(View.VISIBLE);
-                    tvPreviousBookingsEmpty.setVisibility(View.VISIBLE);
-                    Toast.makeText(this, "Failed to load bookings: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -322,7 +360,16 @@ public class CustomerDashboardActivity extends AppCompatActivity {
             if (status == null || status.isEmpty()) {
                 status = "—";
             }
-            tvStatus.setText(status.replace('_', ' ').toUpperCase(Locale.ROOT));
+            String statusText = status.replace('_', ' ').toUpperCase(Locale.ROOT);
+            tvStatus.setText(statusText);
+
+            if ("pending_validation".equalsIgnoreCase(status)) {
+                tvStatus.setBackgroundTintList(ColorStateList.valueOf(0xFFFF9800)); // Warning Orange
+                tvStatus.setTextColor(0xFFFFFFFF);
+            } else if ("confirmed".equalsIgnoreCase(status) || "booked".equalsIgnoreCase(status) || "in_house".equalsIgnoreCase(status)) {
+                tvStatus.setBackgroundTintList(ColorStateList.valueOf(0xFF4CAF50)); // Success Green
+                tvStatus.setTextColor(0xFFFFFFFF);
+            }
 
             String ref = value(doc, "transactionRef");
             tvRef.setText(getString(R.string.booking_ref_line, ref));
@@ -351,6 +398,12 @@ public class CustomerDashboardActivity extends AppCompatActivity {
     private String value(DocumentSnapshot doc, String key) {
         Object v = doc.get(key);
         return v == null ? "—" : v.toString();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (bookingListener != null) bookingListener.remove();
+        super.onDestroy();
     }
 
     private void scrollToSection(View target) {

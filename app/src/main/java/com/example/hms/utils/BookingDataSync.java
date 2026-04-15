@@ -59,7 +59,8 @@ public final class BookingDataSync {
         bookingMap.put("extrasNotes", "");
         bookingMap.put("checkIn", new Timestamp(new java.util.Date(checkInMillis)));
         bookingMap.put("checkOut", new Timestamp(new java.util.Date(checkOutMillis)));
-        bookingMap.put("status", "confirmed");
+        String status = "customer".equals(createdByRole) ? "pending_validation" : "confirmed";
+        bookingMap.put("status", status);
         bookingMap.put("adults", adults);
         bookingMap.put("children", children);
         bookingMap.put("paymentMethod", paymentMethod);
@@ -82,11 +83,68 @@ public final class BookingDataSync {
 
         Task<Void> customerTask = db.collection("customers").document(customerId).set(customerMap, SetOptions.merge());
         Task<Void> bookingTask = db.collection("bookings").document(txnRef).set(bookingMap, SetOptions.merge());
-        Task<Void> financeTask = db.collection("finance_transactions").document(txnRef).set(financeMap, SetOptions.merge());
+        
+        // If it's a pending validation booking (customer online), we don't record finance yet.
+        // It will be recorded when reception validates the payment.
+        if ("pending_validation".equals(bookingMap.get("status"))) {
+            return Tasks.whenAll(customerTask, bookingTask);
+        }
 
-        // We don't mark rooms 'occupied' until they actually arrive (check-in)
-        // They will show as 'booked' in the UI because they are in the bookings collection.
+        Task<Void> financeTask = db.collection("finance_transactions").document(txnRef).set(financeMap, SetOptions.merge());
         return Tasks.whenAll(customerTask, bookingTask, financeTask);
+    }
+
+    /**
+     * Validates an online payment, moving it to confirmed status and recording finance.
+     */
+    public static Task<Void> validatePayment(String bookingId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("bookings").document(bookingId).get().continueWithTask(task -> {
+            DocumentSnapshot snap = task.getResult();
+            if (!snap.exists()) throw new Exception("Booking not found");
+
+            String status = snap.getString("status");
+            if (!"pending_validation".equals(status)) {
+                return Tasks.forResult(null); // Already validated or other status
+            }
+
+            double totalAmount = snap.getDouble("totalAmount") != null ? snap.getDouble("totalAmount") : 0;
+            List<String> roomIds = (List<String>) snap.get("rooms");
+            String paymentMethod = snap.getString("paymentMethod");
+            String customerName = snap.getString("customerName");
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("status", "confirmed");
+            updates.put("updatedAt", Timestamp.now());
+
+            // Create finance record
+            Map<String, Object> financeMap = new HashMap<>();
+            financeMap.put("type", "revenue");
+            financeMap.put("amount", totalAmount);
+            financeMap.put("date", Timestamp.now());
+            financeMap.put("monthKey", AdminMonthKey.nowMonthKey());
+            financeMap.put("category", "Revenue");
+            financeMap.put("subCategory", "Room Booking");
+            financeMap.put("microCategory", "Rooms " + (roomIds != null ? String.join(",", roomIds) : ""));
+            financeMap.put("sourceBookingId", bookingId);
+            financeMap.put("note", "Validated Online Booking: " + customerName);
+            financeMap.put("createdBy", "reception");
+            financeMap.put("createdAt", Timestamp.now());
+
+            Task<Void> bookingUpdate = db.collection("bookings").document(bookingId).update(updates);
+            Task<Void> financeTask = db.collection("finance_transactions").document(bookingId).set(financeMap, SetOptions.merge());
+
+            // Create notification for guest
+            Map<String, Object> notifMap = new HashMap<>();
+            notifMap.put("customerId", snap.getString("customerId"));
+            notifMap.put("title", "Booking Confirmed");
+            notifMap.put("message", "Great news! Your booking " + bookingId + " has been validated and confirmed.");
+            notifMap.put("timestamp", Timestamp.now());
+            notifMap.put("isRead", false);
+            Task<Void> notifTask = db.collection("notifications").document().set(notifMap);
+
+            return Tasks.whenAll(bookingUpdate, financeTask, notifTask);
+        });
     }
 
     /**
@@ -324,7 +382,7 @@ public final class BookingDataSync {
 
     private static String sanitizeCustomerId(String email, String mobile) {
         if (email != null && !email.trim().isEmpty()) {
-            return email.trim().toLowerCase(Locale.ROOT).replace(".", "_");
+            return email.trim().toLowerCase(Locale.ROOT);
         }
         if (mobile != null && !mobile.trim().isEmpty()) {
             return "mob_" + mobile.trim();

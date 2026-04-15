@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.hms.R;
 import com.example.hms.activities.admin.AnalyticsActivity;
 import com.example.hms.activities.admin.FinanceManagerActivity;
@@ -20,8 +21,10 @@ import com.example.hms.activities.admin.RoomLayoutManagerActivity;
 import com.example.hms.auth.authManager;
 import com.example.hms.utils.SessionManager;
 import com.example.hms.utils.ThemeManager;
+import com.example.hms.utils.admin.AdminFirestoreRepository;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.HashMap;
@@ -40,6 +43,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private authManager auth;
     private SessionManager sessionManager;
+    private SwipeRefreshLayout swipeRefresh;
+    private View tvViewMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +64,18 @@ public class AdminDashboardActivity extends AppCompatActivity {
         tvRoomReadyCount = findViewById(R.id.tvRoomReadyCount);
         tvRoomCleaningCount = findViewById(R.id.tvRoomCleaningCount);
         tvRoomMaintCount = findViewById(R.id.tvRoomMaintCount);
+        tvViewMap = findViewById(R.id.tvViewMap);
+
+        swipeRefresh = findViewById(R.id.swipeRefreshAdmin);
+        if (swipeRefresh != null) {
+            swipeRefresh.setOnRefreshListener(this::fetchDashboardStats);
+        }
+
+        if (tvViewMap != null) {
+            tvViewMap.setOnClickListener(v -> 
+                startActivity(new Intent(this, RoomLayoutManagerActivity.class)));
+        }
+
         rvStaffActivity = findViewById(R.id.rvStaffActivity);
 
         // Navigation Tabs - FIXED: Added all listeners and missing imports
@@ -95,16 +112,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
             Toast.makeText(this, "Admin quick action", Toast.LENGTH_SHORT).show();
         });
 
-        // Avatar Logout
+        // Avatar Settings (Standardized)
         View avatar = findViewById(R.id.ivAdminAvatar);
         if (avatar != null) {
             avatar.setOnClickListener(v -> {
-                auth.getAuth().signOut();
-                sessionManager.clearSession();
-                Intent i = new Intent(this, loginPage.class);
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(i);
-                finish();
+                startActivity(new Intent(this, SettingsActivity.class));
             });
         }
 
@@ -180,21 +192,30 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void fetchDashboardStats() {
-        // Fetch financial totals
-        db.collection("transactions").get().addOnSuccessListener(snapshots -> {
-            double revenue = 0;
-            double expenses = 0;
-            for (QueryDocumentSnapshot doc : snapshots) {
-                Double amt = doc.getDouble("amount");
-                String tag = doc.getString("tag");
-                if (amt != null && tag != null) {
-                    if ("Revenue".equals(tag)) revenue += amt;
-                    else if ("Expense".equals(tag)) expenses += amt;
-                }
-            }
-            if (tvFinanceAmount != null) tvFinanceAmount.setText(String.format("₹%,.0f", revenue));
-            if (tvOperatingExpensesAmount != null) tvOperatingExpensesAmount.setText(String.format("₹%,.0f", expenses));
-        });
+        // Fetch financial totals using the correct finance_transactions collection
+        String monthKey = AdminFirestoreRepository.monthKeyNow();
+        db.collection(AdminFirestoreRepository.COL_FINANCE)
+                .whereEqualTo("monthKey", monthKey)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    double revenue = 0;
+                    double expenses = 0;
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Double amt = doc.getDouble("amount");
+                        String type = doc.getString("type");
+                        if (amt != null && type != null) {
+                            if ("revenue".equalsIgnoreCase(type)) revenue += amt;
+                            else if ("expense".equalsIgnoreCase(type)) expenses += amt;
+                        }
+                    }
+                    if (tvFinanceAmount != null) tvFinanceAmount.setText(String.format("₹%,.0f", revenue));
+                    if (tvOperatingExpensesAmount != null) tvOperatingExpensesAmount.setText(String.format("₹%,.0f", expenses));
+                })
+                .addOnFailureListener(e -> {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    Toast.makeText(this, "Stats error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
 
         // Fetch room status dynamically from room layout
         db.collection("rooms").get().addOnSuccessListener(snapshots -> {

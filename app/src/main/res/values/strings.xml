@@ -11,8 +11,10 @@
     <string name="spot_art_district">Kala Ghoda</string>
     <string name="current_bookings">Current bookings</string>
     <string name="previous_bookings">Previous bookings</string>
+    <string name="pending_bookings">Pending bookings</string>
     <string name="no_active_bookings">No active bookings found.</string>
     <string name="no_previous_bookings">No previous bookings found.</string>
+    <string name="no_pending_bookings">No bookings pending validation.</string>
     <string name="profile_section_title">Profile</string>
     <string name="label_name">Name</string>
     <string name="label_email">Email</string>
