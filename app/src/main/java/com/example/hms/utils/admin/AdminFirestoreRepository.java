@@ -2,6 +2,7 @@ package com.example.hms.utils.admin;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -16,6 +17,8 @@ public final class AdminFirestoreRepository {
     public static final String COL_AUTH_USERS = "authorized_users";
     public static final String COL_BOOKINGS = "bookings";
     public static final String COL_CUSTOMERS = "customers";
+    /** Staff / audit feed for admin dashboard */
+    public static final String COL_ADMIN_ACTIVITY = "admin_activity";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -37,6 +40,20 @@ public final class AdminFirestoreRepository {
 
     public CollectionReference customers() {
         return db.collection(COL_CUSTOMERS);
+    }
+
+    /** @see com.example.hms.utils.HotelSettingsRepository */
+    public DocumentReference hotelSettings() {
+        return db.collection("settings").document("hotel");
+    }
+
+    /** Guest satisfaction and other KPI defaults: {@code settings/metrics} */
+    public DocumentReference metricsSettings() {
+        return db.collection("settings").document("metrics");
+    }
+
+    public CollectionReference adminActivity() {
+        return db.collection(COL_ADMIN_ACTIVITY);
     }
 
     public Query financeByMonth(String monthKey) {

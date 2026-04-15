@@ -20,18 +20,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hms.R;
+import com.example.hms.model.admin.FinanceCategory;
 import com.example.hms.model.admin.FinanceTransaction;
+import com.example.hms.utils.MoneyFormat;
 import com.example.hms.utils.ThemeManager;
 import com.example.hms.utils.admin.AdminFirestoreRepository;
+import com.example.hms.utils.admin.FinanceCategoryRepository;
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class FinanceManagerActivity extends AppCompatActivity {
 
@@ -39,14 +43,20 @@ public class FinanceManagerActivity extends AppCompatActivity {
     private final List<FinanceTransaction> allItems = new ArrayList<>();
     private final List<FinanceTransaction> filteredItems = new ArrayList<>();
     private FinanceAdapter adapter;
-    private Spinner spinnerTypeFilter;
+    private ChipGroup chipGroupType;
     private EditText etSearch;
 
-    private static final Map<String, List<String>> SUB_CATEGORIES = new HashMap<>();
-    static {
-        SUB_CATEGORIES.put("expense", Arrays.asList("Groceries", "Utilities", "Maintenance", "Payroll", "Other"));
-        SUB_CATEGORIES.put("revenue", Arrays.asList("Room Booking", "Food", "Laundry", "Service", "Other"));
-    }
+    // Hardcoded Categories as per User Request
+    private static final String[] EXPENSE_CATEGORIES = {
+            "Groceries", "Electricity", "Gas", "Staff Salary", "Maintenance", "Other Expenses"
+    };
+    private static final String[] REVENUE_CATEGORIES = {
+            "Room Booking", "Food & Beverage", "Laundry", "Miscellaneous Revenue"
+    };
+
+    private TextView tvTotalRevenue;
+    private TextView tvTotalExpenses;
+    private TextView tvMargin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,26 +64,29 @@ public class FinanceManagerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_finance_manager);
 
-        spinnerTypeFilter = findViewById(R.id.spinnerTypeFilter);
         etSearch = findViewById(R.id.etSearchFinance);
+        chipGroupType = findViewById(R.id.chipGroupType);
+        tvTotalRevenue = findViewById(R.id.tvTotalRevenue);
+        tvTotalExpenses = findViewById(R.id.tvTotalExpenses);
+        tvMargin = findViewById(R.id.tvMargin);
+
         RecyclerView rv = findViewById(R.id.rvFinance);
         rv.setLayoutManager(new LinearLayoutManager(this));
         adapter = new FinanceAdapter(filteredItems);
         rv.setAdapter(adapter);
 
-        spinnerTypeFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"all", "revenue", "expense"}));
-        spinnerTypeFilter.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) { applyFilters(); }
-            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
-        });
+        chipGroupType.setOnCheckedStateChangeListener((group, checkedIds) -> applyFilters());
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { applyFilters(); }
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        findViewById(R.id.btnAddFinance).setOnClickListener(v -> showEditDialog(null));
+        View btnAdd = findViewById(R.id.btnAddFinance);
+        if (btnAdd != null) {
+            btnAdd.setOnClickListener(v -> showEditDialog(null));
+        }
+
         loadFinance();
     }
 
@@ -93,7 +106,7 @@ public class FinanceManagerActivity extends AppCompatActivity {
     }
 
     private void applyFilters() {
-        String typeFilter = spinnerTypeFilter.getSelectedItem().toString();
+        String typeFilter = currentTypeFilter();
         String search = etSearch.getText().toString().trim().toLowerCase(Locale.ROOT);
         filteredItems.clear();
         for (FinanceTransaction t : allItems) {
@@ -101,11 +114,34 @@ public class FinanceManagerActivity extends AppCompatActivity {
             boolean searchOk = search.isEmpty() ||
                     safe(t.category).toLowerCase(Locale.ROOT).contains(search) ||
                     safe(t.subCategory).toLowerCase(Locale.ROOT).contains(search) ||
-                    safe(t.microCategory).toLowerCase(Locale.ROOT).contains(search) ||
                     safe(t.note).toLowerCase(Locale.ROOT).contains(search);
             if (typeOk && searchOk) filteredItems.add(t);
         }
         adapter.notifyDataSetChanged();
+        updateSummaryForCurrentMonth(filteredItems);
+    }
+
+    private String currentTypeFilter() {
+        int id = chipGroupType.getCheckedChipId();
+        if (id == R.id.chipRevenue) return "revenue";
+        if (id == R.id.chipExpense) return "expense";
+        return "all";
+    }
+
+    private void updateSummaryForCurrentMonth(List<FinanceTransaction> list) {
+        String mk = AdminFirestoreRepository.monthKeyNow();
+        double rev = 0;
+        double exp = 0;
+        for (FinanceTransaction t : list) {
+            if (t == null) continue;
+            if (t.monthKey == null || !mk.equals(t.monthKey)) continue;
+            if ("expense".equalsIgnoreCase(safe(t.type))) exp += t.amount;
+            else rev += t.amount;
+        }
+        tvTotalRevenue.setText(MoneyFormat.format(this, rev));
+        tvTotalExpenses.setText(MoneyFormat.format(this, exp));
+        double margin = rev > 0 ? ((rev - exp) / rev) * 100d : 0d;
+        tvMargin.setText(String.format(Locale.getDefault(), "MARGIN %.1f%%", margin));
     }
 
     private void showEditDialog(FinanceTransaction existing) {
@@ -113,36 +149,36 @@ public class FinanceManagerActivity extends AppCompatActivity {
         Spinner spinnerType = v.findViewById(R.id.spinnerType);
         EditText etAmount = v.findViewById(R.id.etAmount);
         Spinner spinnerCategory = v.findViewById(R.id.spinnerCategory);
-        Spinner spinnerSubCategory = v.findViewById(R.id.spinnerSubCategory);
-        EditText etMicro = v.findViewById(R.id.etMicroCategory);
-        EditText etNote = v.findViewById(R.id.etNote);
-        EditText etBooking = v.findViewById(R.id.etSourceBooking);
+        EditText etNote = v.findViewById(R.id.etNote); // This is now "Details"
+        EditText etRemark = v.findViewById(R.id.etRemark);
 
         spinnerType.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
                 new String[]{"revenue", "expense"}));
 
-        android.widget.AdapterView.OnItemSelectedListener typeListener = new android.widget.AdapterView.OnItemSelectedListener() {
+        spinnerType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                String type = spinnerType.getSelectedItem().toString();
-                List<String> cats = SUB_CATEGORIES.get(type);
-                if (cats == null) cats = Arrays.asList("Other");
-                spinnerCategory.setAdapter(new ArrayAdapter<>(FinanceManagerActivity.this,
-                        android.R.layout.simple_spinner_dropdown_item, cats));
-                spinnerSubCategory.setAdapter(new ArrayAdapter<>(FinanceManagerActivity.this,
-                        android.R.layout.simple_spinner_dropdown_item, cats));
+                String type = spinnerType.getSelectedItem().toString().toLowerCase(Locale.ROOT);
+                String[] cats = "revenue".equals(type) ? REVENUE_CATEGORIES : EXPENSE_CATEGORIES;
+                
+                ArrayAdapter<String> catAdapter = new ArrayAdapter<>(FinanceManagerActivity.this,
+                        android.R.layout.simple_spinner_dropdown_item, cats);
+                spinnerCategory.setAdapter(catAdapter);
+                
+                if (existing != null && type.equalsIgnoreCase(existing.type)) {
+                    setSpinner(spinnerCategory, existing.category);
+                }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
-        };
-        spinnerType.setOnItemSelectedListener(typeListener);
-        typeListener.onItemSelected(null, null, 0, 0);
+        });
 
         if (existing != null) {
-            setSpinner(spinnerType, safe(existing.type));
+            setSpinner(spinnerType, existing.type);
             etAmount.setText(String.valueOf(existing.amount));
-            etMicro.setText(safe(existing.microCategory));
             etNote.setText(safe(existing.note));
-            etBooking.setText(safe(existing.sourceBookingId));
+            etRemark.setText(safe(existing.remark));
+        } else {
+            spinnerType.setSelection(0);
         }
 
         new AlertDialog.Builder(this)
@@ -161,12 +197,11 @@ public class FinanceManagerActivity extends AppCompatActivity {
                     map.put("type", spinnerType.getSelectedItem().toString());
                     map.put("amount", amount);
                     map.put("category", spinnerCategory.getSelectedItem().toString());
-                    map.put("subCategory", spinnerSubCategory.getSelectedItem().toString());
-                    map.put("microCategory", etMicro.getText().toString().trim());
                     map.put("note", etNote.getText().toString().trim());
-                    map.put("sourceBookingId", etBooking.getText().toString().trim());
+                    map.put("remark", etRemark.getText().toString().trim());
                     map.put("date", Timestamp.now());
                     map.put("monthKey", AdminFirestoreRepository.monthKeyNow());
+
                     if (existing == null) {
                         repo.finance().add(map).addOnSuccessListener(x -> loadFinance());
                     } else {
@@ -193,17 +228,42 @@ public class FinanceManagerActivity extends AppCompatActivity {
 
         @NonNull @Override
         public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_finance_transaction, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_finance_transaction_modern, parent, false);
             return new Holder(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull Holder h, int position) {
             FinanceTransaction t = items.get(position);
-            h.tvTitle.setText(String.format(Locale.getDefault(), "%s • ₹%,.0f",
-                    safe(t.type).toUpperCase(Locale.ROOT), t.amount));
-            h.tvMeta.setText(String.format(Locale.getDefault(), "%s > %s > %s\n%s",
-                    safe(t.category), safe(t.subCategory), safe(t.microCategory), safe(t.note)));
+            String type = safe(t.type).toLowerCase(Locale.ROOT);
+            boolean isExpense = "expense".equals(type);
+            h.tvTitle.setText(safe(t.category).isEmpty() ? (isExpense ? "Expense" : "Revenue") : safe(t.category));
+            String amt = MoneyFormat.format(h.itemView.getContext(), t.amount);
+            h.tvAmount.setText((isExpense ? "-" : "+") + amt);
+            h.tvAmount.setTextColor(isExpense ? 0xFFB00020 : 0xFF2E7D32);
+
+            String when = "";
+            if (t.date != null) {
+                long diff = System.currentTimeMillis() - t.date.toDate().getTime();
+                if (diff < TimeUnit.DAYS.toMillis(7)) {
+                    long days = Math.max(0, TimeUnit.MILLISECONDS.toDays(diff));
+                    when = days == 0 ? "Today" : (days + "d ago");
+                } else {
+                    when = t.monthKey == null ? "" : t.monthKey;
+                }
+            }
+            
+            // Show merged note (Details)
+            String sub = safe(t.note);
+            if (!when.isEmpty() && !sub.isEmpty()) {
+                h.tvSub.setText(when + " • " + sub);
+            } else {
+                h.tvSub.setText(when.isEmpty() ? sub : when);
+            }
+            
+            // Show Remark in the note field
+            h.tvNote.setText(safe(t.remark).isEmpty() ? "—" : t.remark);
+
             h.btnEdit.setOnClickListener(v -> showEditDialog(t));
             h.btnDelete.setOnClickListener(v ->
                     repo.finance().document(t.id).delete().addOnSuccessListener(x -> loadFinance()));
@@ -212,15 +272,18 @@ public class FinanceManagerActivity extends AppCompatActivity {
         @Override public int getItemCount() { return items.size(); }
 
         class Holder extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvMeta;
+            TextView tvTitle, tvAmount, tvSub, tvNote;
             Button btnEdit, btnDelete;
             Holder(@NonNull View itemView) {
                 super(itemView);
-                tvTitle = itemView.findViewById(R.id.tvTitle);
-                tvMeta = itemView.findViewById(R.id.tvMeta);
+                tvTitle = itemView.findViewById(R.id.tvTxnTitle);
+                tvAmount = itemView.findViewById(R.id.tvTxnAmount);
+                tvSub = itemView.findViewById(R.id.tvTxnSub);
+                tvNote = itemView.findViewById(R.id.tvTxnNote);
                 btnEdit = itemView.findViewById(R.id.btnEdit);
                 btnDelete = itemView.findViewById(R.id.btnDelete);
             }
         }
     }
+
 }

@@ -10,6 +10,7 @@ public class FinanceTransaction {
     public String subCategory;
     public String microCategory;
     public String note;
+    public String remark;
     public String sourceBookingId;
     public Timestamp date;
     public String monthKey;

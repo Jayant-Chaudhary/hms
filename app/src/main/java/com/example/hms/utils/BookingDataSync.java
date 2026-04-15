@@ -59,7 +59,7 @@ public final class BookingDataSync {
         bookingMap.put("extrasNotes", "");
         bookingMap.put("checkIn", new Timestamp(new java.util.Date(checkInMillis)));
         bookingMap.put("checkOut", new Timestamp(new java.util.Date(checkOutMillis)));
-        bookingMap.put("status", "in_house");
+        bookingMap.put("status", "confirmed");
         bookingMap.put("adults", adults);
         bookingMap.put("children", children);
         bookingMap.put("paymentMethod", paymentMethod);
@@ -84,7 +84,44 @@ public final class BookingDataSync {
         Task<Void> bookingTask = db.collection("bookings").document(txnRef).set(bookingMap, SetOptions.merge());
         Task<Void> financeTask = db.collection("finance_transactions").document(txnRef).set(financeMap, SetOptions.merge());
 
+        // We don't mark rooms 'occupied' until they actually arrive (check-in)
+        // They will show as 'booked' in the UI because they are in the bookings collection.
         return Tasks.whenAll(customerTask, bookingTask, financeTask);
+    }
+
+    /**
+     * Officially checks in the guest, marking status as in_house and rooms as occupied.
+     */
+    public static Task<Void> markArrived(String bookingId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("bookings").document(bookingId).get().continueWithTask(task -> {
+            DocumentSnapshot snap = task.getResult();
+            if (!snap.exists()) throw new Exception("Booking not found");
+
+            List<String> roomIds = (List<String>) snap.get("rooms");
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("status", "in_house");
+            updates.put("checkInActual", Timestamp.now());
+            updates.put("updatedAt", Timestamp.now());
+
+            return db.collection("bookings").document(bookingId).update(updates).continueWithTask(t -> {
+                if (roomIds == null) return Tasks.forResult(null);
+                
+                List<Task<Void>> rTasks = new ArrayList<>();
+                for (String rLabel : roomIds) {
+                    rTasks.add(db.collection("rooms")
+                        .whereEqualTo("bookingRoomId", rLabel)
+                        .get()
+                        .continueWithTask(qr -> {
+                            if (!qr.getResult().isEmpty()) {
+                                return qr.getResult().getDocuments().get(0).getReference().update("housekeepingStatus", "occupied");
+                            }
+                            return Tasks.forResult(null);
+                        }));
+                }
+                return Tasks.whenAll(rTasks);
+            });
+        });
     }
 
     /**
@@ -204,12 +241,47 @@ public final class BookingDataSync {
                 cust.put("updatedAt", Timestamp.now());
                 transaction.set(custRef, cust, SetOptions.merge());
             }
+
+            // Free up rooms
+            Object roomsObj = snap.get("rooms");
+            if (roomsObj instanceof List) {
+                for (Object r : (List<?>) roomsObj) {
+                    String bookingRoomId = String.valueOf(r);
+                    // We need a way to find the doc ID from bookingRoomId. 
+                    // This is slightly tricky in a transaction without a secondary query.
+                    // For now, I'll update byroomId query after transaction or assume one-to-one.
+                    // Actually, I'll do a separate update outside if I can't find docId here.
+                }
+            }
+
             return null;
         }).continueWithTask(task -> {
             if (task.isSuccessful()) {
-                return maybeUpdateCustomerByName(bookingId);
+                return freeRoomsAfterCheckout(bookingId);
             }
             return Tasks.forException(task.getException() != null ? task.getException() : new Exception("Checkout failed"));
+        });
+    }
+
+    private static Task<Void> freeRoomsAfterCheckout(String bookingId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        return db.collection("bookings").document(bookingId).get().continueWithTask(t -> {
+            if (!t.isSuccessful() || t.getResult() == null) return Tasks.forResult(null);
+            List<String> roomIds = (List<String>) t.getResult().get("rooms");
+            if (roomIds == null || roomIds.isEmpty()) return Tasks.forResult(null);
+
+            List<Task<Void>> tasks = new ArrayList<>();
+            for (String rid : roomIds) {
+                // rid is the bookingRoomId (label)
+                tasks.add(db.collection("rooms").whereEqualTo("bookingRoomId", rid).get().continueWithTask(q -> {
+                    if (q.isSuccessful() && q.getResult() != null && !q.getResult().isEmpty()) {
+                        DocumentReference dref = q.getResult().getDocuments().get(0).getReference();
+                        return dref.update("housekeepingStatus", "cleaning");
+                    }
+                    return Tasks.forResult(null);
+                }));
+            }
+            return Tasks.whenAll(tasks).continueWithTask(x -> maybeUpdateCustomerByName(bookingId));
         });
     }
 

@@ -14,10 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.hms.R;
 import com.example.hms.model.HotelRoom;
 import com.example.hms.utils.BookingDataSync;
-import com.example.hms.utils.CustomerBookingDraft;
+import com.example.hms.utils.ReceptionBookingDraft;
 import com.example.hms.utils.RoomInventoryLoader;
 import com.example.hms.utils.ThemeManager;
 import com.example.hms.utils.UpiPaymentUri;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.UUID;
 
 public class CustomerPaymentActivity extends AppCompatActivity {
 
-    private CustomerBookingDraft draft;
+    private ReceptionBookingDraft draft;
     private double totalInr;
     private String txnRef;
     private List<HotelRoom> allRooms;
@@ -37,7 +38,7 @@ public class CustomerPaymentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reception_payment);
 
-        draft = CustomerBookingDraft.get();
+        draft = ReceptionBookingDraft.get();
         txnRef = "CUST-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
 
         TextView tvSummary = findViewById(R.id.tvBookingSummary);
@@ -77,21 +78,32 @@ public class CustomerPaymentActivity extends AppCompatActivity {
         btnPayUpi.setTextColor(0xFFFFFFFF);
 
         btnPayUpi.setOnClickListener(v -> {
-            String upiUri = UpiPaymentUri.build(
-                    getString(R.string.upi_payee_vpa),
-                    getString(R.string.upi_payee_name),
-                    UpiPaymentUri.formatAmount(totalInr),
-                    txnRef
-            );
-            Intent upiIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(upiUri));
-            Intent chooser = Intent.createChooser(upiIntent, "Pay with");
-            if (chooser.resolveActivity(getPackageManager()) != null) {
-                startActivity(chooser);
-                btnDone.setVisibility(View.VISIBLE);
-                Toast.makeText(this, "Complete payment in your UPI app, then come back and tap Done.", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(this, "No UPI app found on this device.", Toast.LENGTH_SHORT).show();
-            }
+            FirebaseFirestore.getInstance().collection("system_config").document("payment_settings").get()
+                .addOnSuccessListener(doc -> {
+                    String vpa = doc.getString("upiId");
+                    String name = doc.getString("payeeName");
+                    
+                    if (vpa == null || vpa.isEmpty()) {
+                        vpa = getString(R.string.upi_payee_vpa);
+                        name = getString(R.string.upi_payee_name);
+                    }
+
+                    String upiUri = UpiPaymentUri.build(
+                            vpa,
+                            name,
+                            UpiPaymentUri.formatAmount(totalInr),
+                            txnRef
+                    );
+                    Intent upiIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(upiUri));
+                    Intent chooser = Intent.createChooser(upiIntent, "Pay with");
+                    if (chooser.resolveActivity(getPackageManager()) != null) {
+                        startActivity(chooser);
+                        btnDone.setVisibility(View.VISIBLE);
+                        Toast.makeText(this, "Complete payment in your UPI app, then come back and tap Done.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "No UPI app found on this device.", Toast.LENGTH_SHORT).show();
+                    }
+                });
         });
 
         btnDone.setOnClickListener(v -> {
@@ -144,7 +156,7 @@ public class CustomerPaymentActivity extends AppCompatActivity {
                 "upi",
                 "customer"
         ).addOnSuccessListener(unused -> {
-            CustomerBookingDraft.reset();
+            ReceptionBookingDraft.reset();
             Intent i = new Intent(this, CustomerDashboardActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);

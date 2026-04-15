@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Hms">
+
+        <activity
+            android:name=".activities.loginPage"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".activities.registerPage" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        
+        <!-- Dashboard Activities -->
+        <activity android:name=".activities.AdminDashboardActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionDashboardActivity" android:exported="false" />
+        <activity android:name=".activities.CustomerDashboardActivity" android:exported="false" />
+
+        <!-- Admin Features -->
+        <activity android:name=".activities.admin.FinanceManagerActivity" android:exported="false" />
+        <activity android:name=".activities.admin.RoleAccessManagerActivity" android:exported="false" />
+        <activity android:name=".activities.admin.AnalyticsActivity" android:exported="false" />
+        <activity android:name=".activities.admin.StayMonitorActivity" android:exported="false" />
+        <activity android:name=".activities.admin.CustomerDataActivity" android:exported="false" />
+        <activity android:name=".activities.admin.FinanceLedgerActivity" android:exported="false" />
+        <activity android:name=".activities.admin.RoomLayoutManagerActivity" android:exported="false" />
+
+        <!-- Reception Features -->
+        <activity android:name=".activities.ReceptionCustomerRegistrationActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionRoomSelectionActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionArrivalsActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionPaymentActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionHistoryActivity" android:exported="false" />
+        <activity android:name=".activities.ReceptionCheckoutPaymentActivity" android:exported="false" />
+
+        <!-- Customer Features -->
+        <activity android:name=".activities.CustomerRegistrationActivity" android:exported="false" />
+        <activity android:name=".activities.CustomerRoomSelectionActivity" android:exported="false" />
+        <activity android:name=".activities.CustomerPaymentActivity" android:exported="false" />
+        <activity android:name=".activities.CustomerNotificationsActivity" android:exported="false" />
+
+        <activity android:name=".activities.SettingsActivity" android:exported="false" />
+
+    </application>
+
+</manifest>

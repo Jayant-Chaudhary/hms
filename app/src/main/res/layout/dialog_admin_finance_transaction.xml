@@ -2,68 +2,98 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="10dp">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Transaction Type"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold" />
+
         <Spinner
             android:id="@+id/spinnerType"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
             android:background="@drawable/rounded_edittext" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Amount"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/etAmount"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:hint="Amount"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:hint="0.00"
             android:inputType="numberDecimal"
             android:background="@drawable/rounded_edittext"
-            android:paddingHorizontal="12dp" />
+            android:paddingHorizontal="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Category"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold" />
 
         <Spinner
             android:id="@+id/spinnerCategory"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
             android:background="@drawable/rounded_edittext" />
 
-        <Spinner
-            android:id="@+id/spinnerSubCategory"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/rounded_edittext" />
-
-        <EditText
-            android:id="@+id/etMicroCategory"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:hint="Micro category (e.g. milk)"
-            android:background="@drawable/rounded_edittext"
-            android:paddingHorizontal="12dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Details (Sub-category/Note)"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/etNote"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:hint="Note"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:hint="Specific details..."
             android:background="@drawable/rounded_edittext"
-            android:paddingHorizontal="12dp" />
+            android:paddingHorizontal="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Remark"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textStyle="bold" />
 
         <EditText
-            android:id="@+id/etSourceBooking"
+            android:id="@+id/etRemark"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:hint="Booking Id (optional)"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:hint="Any internal comments..."
             android:background="@drawable/rounded_edittext"
-            android:paddingHorizontal="12dp" />
+            android:paddingHorizontal="16dp" />
+
     </LinearLayout>
 </ScrollView>

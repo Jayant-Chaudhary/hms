@@ -9,6 +9,9 @@ public class RoomConfig {
     public int pricePerNight;
     public boolean active = true;
     public int layoutOrder;
+    /** Housekeeping: {@code ready} or {@code cleaning} (Firestore string). */
+    public String housekeepingStatus = "ready";
+    public boolean underMaintenance = false;
 
     public RoomConfig() {
     }

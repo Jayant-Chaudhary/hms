@@ -2,10 +2,44 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand Palette (Day) -->
+    <color name="primary">#5E35B1</color>
+    <color name="primary_dark">#4527A0</color>
+    <color name="primary_light">#D1C4E9</color>
+    <color name="secondary">#42A5F5</color>
+    <color name="secondary_light">#E3F2FD</color>
+    <color name="tertiary">#EC407A</color>
+    <color name="tertiary_light">#FCE4EC</color>
+    
+    <color name="neutral_bg">#F8F9FF</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F3F9</color>
+    
     <color name="text_primary">#1A1A2E</color>
-    <color name="text_secondary">#4E5A6A</color>
+    <color name="text_secondary">#6C757D</color>
+    <color name="text_on_primary">#FFFFFF</color>
+
+    <!-- Status Colors -->
+    <color name="success">#2E7D32</color>
+    <color name="error">#B00020</color>
+    <color name="red_500">#DC3545</color>
+    <color name="warning">#FFA000</color>
+    
+    <!-- Gradients -->
+    <color name="grad_start">#5E35B1</color>
+    <color name="grad_end">#1E88E5</color>
+
+    <!-- UI Components -->
+    <color name="chip_bg">#F3E5F5</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="bg_dashboard">#F5F7FB</color>
+    <color name="hero_label_text">#E0E0E0</color>
+    <color name="hero_muted_text">#BDBDBD</color>
     <color name="dashboard_outline_text">#1565C0</color>
-    <color name="room_available_text">#1A1A2E</color>
-    <color name="room_selected_text">#0D3B82</color>
-    <color name="room_booked_text">#666666</color>
+
+    <!-- Room Selection States -->
+    <color name="room_available_text">#1565C0</color>
+    <color name="room_selected_text">#FFFFFF</color>
+    <color name="room_booked_text">#757575</color>
 </resources>

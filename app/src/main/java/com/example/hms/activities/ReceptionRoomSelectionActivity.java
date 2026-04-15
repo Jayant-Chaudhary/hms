@@ -233,6 +233,7 @@ public class ReceptionRoomSelectionActivity extends AppCompatActivity {
         }
         draft.selectedRoomIds.clear();
         draft.selectedRoomIds.addAll(selectedIds);
-        startActivity(new Intent(this, ReceptionPaymentActivity.class));
+        Class<?> target = "customer".equals(draft.createdByRole) ? CustomerPaymentActivity.class : ReceptionPaymentActivity.class;
+        startActivity(new Intent(this, target));
     }
 }

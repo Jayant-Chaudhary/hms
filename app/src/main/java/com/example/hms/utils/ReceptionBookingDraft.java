@@ -34,6 +34,8 @@ public final class ReceptionBookingDraft {
     public long checkOutMillis;
 
     public final List<String> selectedRoomIds = new ArrayList<>();
+    public String createdByRole = "reception"; // default to reception
+
 
     public int nights() {
         if (checkOutMillis <= checkInMillis) {

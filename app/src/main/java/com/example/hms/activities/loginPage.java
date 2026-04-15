@@ -50,9 +50,8 @@ public class loginPage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         
         sessionManager = new SessionManager(this);
-        sessionManager.clearSession();
-        
-        // 1. Check if user is already logged in via SessionManager
+
+        // Resume session when "Remember me" was used (must run before any clearSession).
         if (sessionManager.isLoggedIn()) {
             redirectBasedOnRole(sessionManager.getRole());
             return;

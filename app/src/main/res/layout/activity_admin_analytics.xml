@@ -20,8 +20,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Swipe horizontally: Monthly Net, Daily Revenue, Daily Expense"
-        android:textColor="#555555" />
+        android:text="Swipe to explore: Revenue vs Expenses, Net, Expenses"
+        android:textColor="#FFFFFF"
+        android:alpha="0.85" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPagerAnalytics"

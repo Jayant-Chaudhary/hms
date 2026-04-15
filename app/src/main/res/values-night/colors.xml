@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="text_primary">#E6EAF2</color>
-    <color name="text_secondary">#B0B8C4</color>
-    <color name="dashboard_outline_text">#9CC5FF</color>
-    <color name="room_available_text">#EAF1FF</color>
-    <color name="room_selected_text">#CFE3FF</color>
-    <color name="room_booked_text">#9099A8</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Dark Mode Brand Palette -->
+    <color name="primary">#B39DDB</color> <!-- Lighter purple for dark mode -->
+    <color name="primary_dark">#5E35B1</color>
+    <color name="primary_light">#311B92</color>
+    <color name="secondary">#90CAF9</color>
+    <color name="tertiary">#F48FB1</color>
+    
+    <color name="neutral_bg">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="surface_variant">#2C2C2C</color>
+    
+    <color name="text_primary">#E1E1E1</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="text_on_primary">#000000</color>
+
+    <!-- Status Colors -->
+    <color name="success">#81C784</color>
+    <color name="error">#E57373</color>
+    <color name="warning">#FFB74D</color>
+    
+    <color name="divider">#333333</color>
+    <color name="chip_bg">#311B92</color>
+    <color name="bg_dashboard">#121212</color>
+    <color name="hero_label_text">#B39DDB</color>
+    <color name="hero_muted_text">#AAAAAA</color>
+    <color name="dashboard_outline_text">#90CAF9</color>
 </resources>

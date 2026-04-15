@@ -2,90 +2,225 @@ package com.example.hms.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hms.R;
 import com.example.hms.activities.admin.AnalyticsActivity;
-import com.example.hms.activities.admin.CustomerDataActivity;
 import com.example.hms.activities.admin.FinanceManagerActivity;
 import com.example.hms.activities.admin.RoleAccessManagerActivity;
 import com.example.hms.activities.admin.RoomLayoutManagerActivity;
-import com.example.hms.activities.admin.StayMonitorActivity;
+import com.example.hms.auth.authManager;
+import com.example.hms.utils.SessionManager;
 import com.example.hms.utils.ThemeManager;
-import com.example.hms.utils.admin.AdminFirestoreRepository;
-import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AdminDashboardActivity extends AppCompatActivity {
 
-    private final AdminFirestoreRepository repo = new AdminFirestoreRepository();
+    private RecyclerView rvStaffActivity;
+    private TextView tvGreetingTitle, tvFinanceAmount, tvOperatingExpensesAmount, 
+                     tvOccupancyPct, tvSatisfactionScore, tvRoomReadyCount, 
+                     tvRoomCleaningCount, tvRoomMaintCount;
+    
+    private EditText etHotelDisplayName, etHotelLatitude, etHotelLongitude;
+    private EditText etGlobalUpiId, etGlobalPayeeName;
+
+    private FirebaseFirestore db;
+    private authManager auth;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ThemeManager.applyTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
 
-        findViewById(R.id.btnFinanceManager).setOnClickListener(v ->
-                startActivity(new Intent(this, FinanceManagerActivity.class)));
-        findViewById(R.id.btnAnalytics).setOnClickListener(v ->
-                startActivity(new Intent(this, AnalyticsActivity.class)));
-        findViewById(R.id.btnRoomLayout).setOnClickListener(v ->
-                startActivity(new Intent(this, RoomLayoutManagerActivity.class)));
-        findViewById(R.id.btnRoleAccess).setOnClickListener(v ->
-                startActivity(new Intent(this, RoleAccessManagerActivity.class)));
-        findViewById(R.id.btnStayMonitor).setOnClickListener(v ->
-                startActivity(new Intent(this, StayMonitorActivity.class)));
-        findViewById(R.id.btnCustomerData).setOnClickListener(v ->
-                startActivity(new Intent(this, CustomerDataActivity.class)));
+        db = FirebaseFirestore.getInstance();
+        auth = new authManager();
+        sessionManager = new SessionManager(this);
 
-        loadKpis();
+        // Bind Views matching activity_admin_dashboard.xml
+        tvGreetingTitle = findViewById(R.id.tvGreetingTitle);
+        tvFinanceAmount = findViewById(R.id.tvFinanceAmount);
+        tvOperatingExpensesAmount = findViewById(R.id.tvOperatingExpensesAmount);
+        tvOccupancyPct = findViewById(R.id.tvOccupancyPct);
+        tvSatisfactionScore = findViewById(R.id.tvSatisfactionScore);
+        tvRoomReadyCount = findViewById(R.id.tvRoomReadyCount);
+        tvRoomCleaningCount = findViewById(R.id.tvRoomCleaningCount);
+        tvRoomMaintCount = findViewById(R.id.tvRoomMaintCount);
+        rvStaffActivity = findViewById(R.id.rvStaffActivity);
+
+        // Navigation Tabs - FIXED: Added all listeners and missing imports
+        View navTabFinance = findViewById(R.id.navTabFinance);
+        View navTabAnalytics = findViewById(R.id.navTabAnalytics);
+        View navTabRooms = findViewById(R.id.navTabRooms);
+        View navTabAccess = findViewById(R.id.navTabAccess);
+
+        if (navTabFinance != null) {
+            navTabFinance.setOnClickListener(v -> 
+                startActivity(new Intent(this, FinanceManagerActivity.class)));
+        }
+        if (navTabAnalytics != null) {
+            navTabAnalytics.setOnClickListener(v -> 
+                startActivity(new Intent(this, AnalyticsActivity.class)));
+        }
+        if (navTabRooms != null) {
+            navTabRooms.setOnClickListener(v -> 
+                startActivity(new Intent(this, RoomLayoutManagerActivity.class)));
+        }
+        if (navTabAccess != null) {
+            navTabAccess.setOnClickListener(v -> 
+                startActivity(new Intent(this, RoleAccessManagerActivity.class)));
+        }
+
+        View titleLogo = findViewById(R.id.tvAdminTitle);
+        if (titleLogo != null) {
+            titleLogo.setOnClickListener(v -> 
+                startActivity(new Intent(this, SettingsActivity.class)));
+        }
+
+        // FAB logic
+        findViewById(R.id.fabAdmin).setOnClickListener(v -> {
+            Toast.makeText(this, "Admin quick action", Toast.LENGTH_SHORT).show();
+        });
+
+        // Avatar Logout
+        View avatar = findViewById(R.id.ivAdminAvatar);
+        if (avatar != null) {
+            avatar.setOnClickListener(v -> {
+                auth.getAuth().signOut();
+                sessionManager.clearSession();
+                Intent i = new Intent(this, loginPage.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(i);
+                finish();
+            });
+        }
+
+        setupUserInfo();
+        setupRecyclerView();
+        setupConfig();
+        fetchDashboardStats();
     }
 
-    private void loadKpis() {
-        TextView tvRev = findViewById(R.id.tvTodayRevenue);
-        TextView tvExp = findViewById(R.id.tvTodayExpense);
-        TextView tvInHouse = findViewById(R.id.tvInHouse);
-        TextView tvDue = findViewById(R.id.tvDueCheckout);
+    private void setupConfig() {
+        // Location binds
+        etHotelDisplayName = findViewById(R.id.etHotelDisplayName);
+        etHotelLatitude = findViewById(R.id.etHotelLatitude);
+        etHotelLongitude = findViewById(R.id.etHotelLongitude);
+        Button btnSaveLoc = findViewById(R.id.btnSaveHotelLocation);
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Timestamp todayStart = new Timestamp(new Date(cal.getTimeInMillis()));
+        // UPI binds
+        etGlobalUpiId = findViewById(R.id.etGlobalUpiId);
+        etGlobalPayeeName = findViewById(R.id.etGlobalPayeeName);
+        Button btnSaveUpi = findViewById(R.id.btnSavePaymentConfig);
 
-        repo.finance()
-                .whereGreaterThanOrEqualTo("date", todayStart)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    double rev = 0;
-                    double exp = 0;
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        String type = doc.getString("type");
-                        Double amount = doc.getDouble("amount");
-                        double a = amount == null ? 0 : amount;
-                        if ("expense".equalsIgnoreCase(type)) exp += a;
-                        else rev += a;
-                    }
-                    tvRev.setText(String.format(Locale.getDefault(), "Today Revenue\n₹%,.0f", rev));
-                    tvExp.setText(String.format(Locale.getDefault(), "Today Expense\n₹%,.0f", exp));
-                });
+        // Load existing
+        db.collection("system_config").document("hotel_details").get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                if (etHotelDisplayName != null) etHotelDisplayName.setText(doc.getString("displayName"));
+                if (etHotelLatitude != null) etHotelLatitude.setText(String.valueOf(doc.get("latitude")));
+                if (etHotelLongitude != null) etHotelLongitude.setText(String.valueOf(doc.get("longitude")));
+            }
+        });
 
-        repo.bookings()
-                .whereEqualTo("status", "in_house")
-                .get()
-                .addOnSuccessListener(s -> tvInHouse.setText("In-house\n" + s.size()));
+        db.collection("system_config").document("payment_settings").get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                if (etGlobalUpiId != null) etGlobalUpiId.setText(doc.getString("upiId"));
+                if (etGlobalPayeeName != null) etGlobalPayeeName.setText(doc.getString("payeeName"));
+            }
+        });
 
-        repo.bookings()
-                .whereEqualTo("status", "due_checkout")
-                .get()
-                .addOnSuccessListener(s -> tvDue.setText("Due Checkouts\n" + s.size()));
+        if (btnSaveLoc != null) {
+            btnSaveLoc.setOnClickListener(v -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("displayName", etHotelDisplayName.getText().toString());
+                try {
+                    data.put("latitude", Double.parseDouble(etHotelLatitude.getText().toString()));
+                    data.put("longitude", Double.parseDouble(etHotelLongitude.getText().toString()));
+                } catch (Exception e) {}
+                db.collection("system_config").document("hotel_details").set(data)
+                        .addOnSuccessListener(a -> Toast.makeText(this, "Location saved", Toast.LENGTH_SHORT).show());
+            });
+        }
+
+        if (btnSaveUpi != null) {
+            btnSaveUpi.setOnClickListener(v -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("upiId", etGlobalUpiId.getText().toString());
+                data.put("payeeName", etGlobalPayeeName.getText().toString());
+                db.collection("system_config").document("payment_settings").set(data)
+                        .addOnSuccessListener(a -> Toast.makeText(this, "UPI settings updated", Toast.LENGTH_SHORT).show());
+            });
+        }
+    }
+
+    private void setupUserInfo() {
+        FirebaseUser user = auth.getAuth().getCurrentUser();
+        if (user != null && tvGreetingTitle != null) {
+            tvGreetingTitle.setText("Morning, Executive.");
+        }
+    }
+
+    private void setupRecyclerView() {
+        if (rvStaffActivity != null) {
+            rvStaffActivity.setLayoutManager(new LinearLayoutManager(this));
+        }
+    }
+
+    private void fetchDashboardStats() {
+        // Fetch financial totals
+        db.collection("transactions").get().addOnSuccessListener(snapshots -> {
+            double revenue = 0;
+            double expenses = 0;
+            for (QueryDocumentSnapshot doc : snapshots) {
+                Double amt = doc.getDouble("amount");
+                String tag = doc.getString("tag");
+                if (amt != null && tag != null) {
+                    if ("Revenue".equals(tag)) revenue += amt;
+                    else if ("Expense".equals(tag)) expenses += amt;
+                }
+            }
+            if (tvFinanceAmount != null) tvFinanceAmount.setText(String.format("₹%,.0f", revenue));
+            if (tvOperatingExpensesAmount != null) tvOperatingExpensesAmount.setText(String.format("₹%,.0f", expenses));
+        });
+
+        // Fetch room status dynamically from room layout
+        db.collection("rooms").get().addOnSuccessListener(snapshots -> {
+            int ready = 0, cleaning = 0, maint = 0;
+            for (QueryDocumentSnapshot doc : snapshots) {
+                Boolean isMaint = doc.getBoolean("underMaintenance");
+                String hk = doc.getString("housekeepingStatus");
+                
+                if (Boolean.TRUE.equals(isMaint)) {
+                    maint++;
+                } else if ("cleaning".equalsIgnoreCase(hk)) {
+                    cleaning++;
+                } else if ("ready".equalsIgnoreCase(hk)) {
+                    ready++;
+                }
+            }
+            if (tvRoomReadyCount != null) tvRoomReadyCount.setText(String.valueOf(ready));
+            if (tvRoomCleaningCount != null) tvRoomCleaningCount.setText(String.valueOf(cleaning));
+            if (tvRoomMaintCount != null) tvRoomMaintCount.setText(String.valueOf(maint));
+            
+            if (snapshots.size() > 0 && tvOccupancyPct != null) {
+                // Occupied = Total - Ready - Cleaning - Maint (Simplified logic)
+                int occupied = snapshots.size() - ready - cleaning - maint;
+                int pct = (occupied * 100) / snapshots.size();
+                tvOccupancyPct.setText(pct + "%");
+            }
+        });
     }
 }

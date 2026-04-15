@@ -16,8 +16,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hms.R;
+import com.example.hms.model.admin.AdminActivityItem;
 import com.example.hms.model.admin.RoomConfig;
+import com.example.hms.utils.MoneyFormat;
+import com.example.hms.utils.SessionManager;
 import com.example.hms.utils.ThemeManager;
+import com.example.hms.utils.admin.AdminActivityLog;
 import com.example.hms.utils.admin.AdminFirestoreRepository;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -85,6 +89,9 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
         EditText etCapA = v.findViewById(R.id.etCapAdults);
         EditText etCapC = v.findViewById(R.id.etCapChildren);
         EditText etPrice = v.findViewById(R.id.etPricePerNight);
+        EditText etHousekeeping = v.findViewById(R.id.etHousekeeping);
+        com.google.android.material.switchmaterial.SwitchMaterial swMaint =
+                v.findViewById(R.id.swUnderMaintenance);
 
         if (existing != null) {
             etRoomId.setText(existing.roomId);
@@ -92,6 +99,11 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
             etCapA.setText(String.valueOf(existing.capacityAdults));
             etCapC.setText(String.valueOf(existing.capacityChildren));
             etPrice.setText(String.valueOf(existing.pricePerNight));
+            etHousekeeping.setText(existing.housekeepingStatus != null ? existing.housekeepingStatus : "ready");
+            swMaint.setChecked(existing.underMaintenance);
+        } else {
+            etHousekeeping.setText("ready");
+            swMaint.setChecked(false);
         }
 
         new AlertDialog.Builder(this)
@@ -104,6 +116,14 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
                     int capA = parseInt(etCapA.getText().toString(), -1);
                     int capC = parseInt(etCapC.getText().toString(), 0);
                     int price = parseInt(etPrice.getText().toString(), -1);
+                    String hkRaw = etHousekeeping.getText().toString().trim().toLowerCase(Locale.ROOT);
+                    if (hkRaw.isEmpty()) {
+                        hkRaw = "ready";
+                    }
+                    if (!"ready".equals(hkRaw) && !"cleaning".equals(hkRaw)) {
+                        Toast.makeText(this, "Housekeeping must be \"ready\" or \"cleaning\"", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     if (roomId.isEmpty() || floor < 0 || capA < 1 || price < 0) {
                         Toast.makeText(this, "Invalid room details", Toast.LENGTH_SHORT).show();
                         return;
@@ -115,12 +135,26 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
                     map.put("capacityChildren", capC);
                     map.put("pricePerNight", price);
                     map.put("active", true);
+                    final String hk = hkRaw;
+                    map.put("housekeepingStatus", hk);
+                    map.put("underMaintenance", swMaint.isChecked());
                     map.put("layoutOrder", floor * 1000 + parseInt(roomId.replaceAll("[^0-9]", ""), 0));
+                    SessionManager sm = new SessionManager(this);
+                    String actor = sm.getName();
+                    if (actor == null || actor.isEmpty()) {
+                        actor = "Admin";
+                    }
+                    String finalActor = actor;
                     if (existing == null) {
                         String docId = roomId.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "_");
                         repo.rooms().document(docId)
                                 .set(map)
-                                .addOnSuccessListener(x -> loadRooms())
+                                .addOnSuccessListener(x -> {
+                                    AdminActivityLog.append(finalActor,
+                                            "Room " + roomId + " created (HK: " + hk + ")",
+                                            AdminActivityItem.TYPE_LOG);
+                                    loadRooms();
+                                })
                                 .addOnFailureListener(e -> Toast.makeText(
                                         this,
                                         "Could not save room: " + e.getMessage(),
@@ -129,7 +163,13 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
                     } else {
                         repo.rooms().document(existing.id)
                                 .update(map)
-                                .addOnSuccessListener(x -> loadRooms())
+                                .addOnSuccessListener(x -> {
+                                    AdminActivityLog.append(finalActor,
+                                            "Room " + roomId + " updated (HK: " + hk + ", maint: "
+                                                    + swMaint.isChecked() + ")",
+                                            AdminActivityItem.TYPE_LOG);
+                                    loadRooms();
+                                })
                                 .addOnFailureListener(e -> Toast.makeText(
                                         this,
                                         "Could not update room: " + e.getMessage(),
@@ -153,9 +193,14 @@ public class RoomLayoutManagerActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull Holder h, int position) {
             RoomConfig r = items.get(position);
             h.title.setText("Room " + r.roomId + " • Floor " + r.floor);
+            String hk = r.housekeepingStatus != null ? r.housekeepingStatus : "ready";
             h.meta.setText(String.format(Locale.getDefault(),
-                    "Adults: %d, Children: %d, Price: ₹%d",
-                    r.capacityAdults, r.capacityChildren, r.pricePerNight));
+                    "Adults: %d, Children: %d, Price: %s · HK: %s · Maint: %s",
+                    r.capacityAdults,
+                    r.capacityChildren,
+                    MoneyFormat.format(h.itemView.getContext(), r.pricePerNight),
+                    hk,
+                    r.underMaintenance ? "yes" : "no"));
             h.btnEdit.setOnClickListener(v -> showEditDialog(r));
             h.btnDelete.setOnClickListener(v ->
                     repo.rooms().document(r.id).delete().addOnSuccessListener(x -> loadRooms()));

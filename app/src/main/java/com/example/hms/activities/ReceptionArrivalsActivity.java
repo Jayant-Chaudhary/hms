@@ -56,7 +56,7 @@ public class ReceptionArrivalsActivity extends AppCompatActivity {
     private void loadArrivals() {
         FirebaseFirestore.getInstance()
                 .collection("bookings")
-                .whereIn("status", java.util.Arrays.asList("in_house", "due_checkout", "booked"))
+                .whereIn("status", java.util.Arrays.asList("confirmed", "in_house", "due_checkout"))
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     items.clear();
@@ -113,25 +113,37 @@ public class ReceptionArrivalsActivity extends AppCompatActivity {
                     : " | Balance: settled";
             h.meta.setText("Checkout: " + out + " | Total: ₹" + String.format(Locale.getDefault(), "%,.0f", b.totalAmount) + balLine);
 
-            h.action.setText(b.balanceDue > 0.01 ? "Pay balance" : "Confirm checkout");
-            h.action.setEnabled(!"checked_out".equalsIgnoreCase(b.status));
-            h.action.setOnClickListener(v -> {
-                if (b.balanceDue > 0.01) {
-                    Intent pay = new Intent(ReceptionArrivalsActivity.this, ReceptionCheckoutPaymentActivity.class);
-                    pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_BOOKING_ID, b.id);
-                    pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_AMOUNT, b.balanceDue);
-                    pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_GUEST_LABEL, b.customerName);
-                    startActivity(pay);
-                    return;
-                }
-                BookingDataSync.confirmCheckout(b.id)
-                        .addOnSuccessListener(unused -> {
-                            Toast.makeText(ReceptionArrivalsActivity.this, "Marked checked out", Toast.LENGTH_SHORT).show();
-                            loadArrivals();
-                        })
-                        .addOnFailureListener(e -> Toast.makeText(ReceptionArrivalsActivity.this,
-                                e.getMessage() != null ? e.getMessage() : "Checkout failed", Toast.LENGTH_LONG).show());
-            });
+            if ("confirmed".equalsIgnoreCase(b.status)) {
+                h.action.setText("Mark Arrived");
+                h.action.setOnClickListener(v -> {
+                    BookingDataSync.markArrived(b.id)
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(ReceptionArrivalsActivity.this, "Guest checked in!", Toast.LENGTH_SHORT).show();
+                                loadArrivals();
+                            })
+                            .addOnFailureListener(e -> Toast.makeText(ReceptionArrivalsActivity.this, "Check-in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                });
+            } else {
+                h.action.setText(b.balanceDue > 0.01 ? "Pay balance" : "Confirm checkout");
+                h.action.setEnabled(!"checked_out".equalsIgnoreCase(b.status));
+                h.action.setOnClickListener(v -> {
+                    if (b.balanceDue > 0.01) {
+                        Intent pay = new Intent(ReceptionArrivalsActivity.this, ReceptionCheckoutPaymentActivity.class);
+                        pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_BOOKING_ID, b.id);
+                        pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_AMOUNT, b.balanceDue);
+                        pay.putExtra(ReceptionCheckoutPaymentActivity.EXTRA_GUEST_LABEL, b.customerName);
+                        startActivity(pay);
+                        return;
+                    }
+                    BookingDataSync.confirmCheckout(b.id)
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(ReceptionArrivalsActivity.this, "Marked checked out", Toast.LENGTH_SHORT).show();
+                                loadArrivals();
+                            })
+                            .addOnFailureListener(e -> Toast.makeText(ReceptionArrivalsActivity.this,
+                                    e.getMessage() != null ? e.getMessage() : "Checkout failed", Toast.LENGTH_LONG).show());
+                });
+            }
         }
 
         @Override public int getItemCount() { return items.size(); }

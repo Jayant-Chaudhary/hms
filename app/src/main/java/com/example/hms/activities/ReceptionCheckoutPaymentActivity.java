@@ -16,6 +16,7 @@ import com.example.hms.utils.BookingDataSync;
 import com.example.hms.utils.QrBitmapEncoder;
 import com.example.hms.utils.ThemeManager;
 import com.example.hms.utils.UpiPaymentUri;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Locale;
 
@@ -62,20 +63,30 @@ public class ReceptionCheckoutPaymentActivity extends AppCompatActivity {
 
         findViewById(R.id.btnPayUpi).setOnClickListener(v -> {
             paymentMethod = "upi";
-            String amount = UpiPaymentUri.formatAmount(amountInr);
-            String vpa = getString(R.string.upi_payee_vpa);
-            String name = getString(R.string.upi_payee_name);
-            String uri = UpiPaymentUri.build(vpa, name, amount, bookingId + "-bal");
-            int size = (int) (getResources().getDisplayMetrics().density * 240);
-            Bitmap bmp = QrBitmapEncoder.encode(uri, size);
-            if (bmp != null) {
-                imgQr.setImageBitmap(bmp);
-                imgQr.setVisibility(View.VISIBLE);
-                tvQrHint.setVisibility(View.VISIBLE);
-            } else {
-                Toast.makeText(this, "Could not create QR", Toast.LENGTH_SHORT).show();
-            }
-            btnDone.setVisibility(View.VISIBLE);
+            FirebaseFirestore.getInstance().collection("system_config").document("payment_settings").get()
+                .addOnSuccessListener(doc -> {
+                    String vpa = doc.getString("upiId");
+                    String name = doc.getString("payeeName");
+                    
+                    if (vpa == null || vpa.isEmpty()) {
+                        Toast.makeText(this, "Admin has not configured UPI ID. Using default.", Toast.LENGTH_SHORT).show();
+                        vpa = getString(R.string.upi_payee_vpa);
+                        name = getString(R.string.upi_payee_name);
+                    }
+
+                    String amount = UpiPaymentUri.formatAmount(amountInr);
+                    String uri = UpiPaymentUri.build(vpa, name, amount, bookingId + "-bal");
+                    int size = (int) (getResources().getDisplayMetrics().density * 240);
+                    Bitmap bmp = QrBitmapEncoder.encode(uri, size);
+                    if (bmp != null) {
+                        imgQr.setImageBitmap(bmp);
+                        imgQr.setVisibility(View.VISIBLE);
+                        tvQrHint.setVisibility(View.VISIBLE);
+                        btnDone.setVisibility(View.VISIBLE);
+                    } else {
+                        Toast.makeText(this, "Could not create QR", Toast.LENGTH_SHORT).show();
+                    }
+                });
         });
 
         btnDone.setOnClickListener(v -> persist());

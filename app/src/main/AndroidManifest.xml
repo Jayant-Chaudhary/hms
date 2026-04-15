@@ -28,50 +28,25 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.CustomerDashboardActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.ReceptionDashboardActivity"
             android:exported="false" />
+
         <activity
             android:name=".activities.AdminDashboardActivity"
             android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionCustomerRegistrationActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionRoomSelectionActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionPaymentActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionCheckoutPaymentActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionHistoryActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.ReceptionArrivalsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.SettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.CustomerRegistrationActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.CustomerRoomSelectionActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.CustomerPaymentActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.CustomerNotificationsActivity"
-            android:exported="false" />
+
+        <!-- Admin activities in the .admin subpackage -->
         <activity
             android:name=".activities.admin.FinanceManagerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.admin.RoleAccessManagerActivity"
             android:exported="false" />
         <activity
             android:name=".activities.admin.AnalyticsActivity"
@@ -79,14 +54,53 @@
         <activity
             android:name=".activities.admin.RoomLayoutManagerActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.admin.RoleAccessManagerActivity"
+            android:name=".activities.ManageRolesActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.admin.StayMonitorActivity"
+            android:name=".activities.RevenueActivity"
             android:exported="false" />
+
         <activity
-            android:name=".activities.admin.CustomerDataActivity"
+            android:name=".activities.AttendanceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionCustomerRegistrationActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionRoomSelectionActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionArrivalsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionPaymentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionHistoryActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionCheckoutActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ReceptionCheckoutPaymentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.CustomerPaymentActivity"
             android:exported="false" />
 
     </application>

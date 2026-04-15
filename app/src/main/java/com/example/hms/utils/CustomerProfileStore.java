@@ -34,6 +34,10 @@ public class CustomerProfileStore {
         prefs.edit().putString(KEY_NAME, name).apply();
     }
 
+    public void setEmail(String email) {
+        prefs.edit().putString(KEY_EMAIL, email == null ? "" : email).apply();
+    }
+
     public void saveProfile(
             String name,
             String mobile,

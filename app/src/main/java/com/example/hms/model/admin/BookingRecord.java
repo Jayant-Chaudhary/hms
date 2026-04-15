@@ -10,9 +10,14 @@ public class BookingRecord {
     public String customerId;
     public List<String> rooms;
     public double totalAmount;
+    public double amountPaid;
+    public double balanceDue;
     public Timestamp checkIn;
     public Timestamp checkOut;
     public String status;
+    public String email;
+    public String mobile;
+    public String createdByRole;
 
     public BookingRecord() {
     }

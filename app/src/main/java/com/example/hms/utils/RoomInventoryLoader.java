@@ -49,6 +49,7 @@ public final class RoomInventoryLoader {
                         seed.id = doc.getId();
                         seed.bookingRoomId = roomId;
                         seed.label = roomId;
+                        seed.housekeepingStatus = doc.getString("housekeepingStatus");
                         seed.floor = asInt(doc.get("floor"), 0);
                         seed.maxAdults = Math.max(1, asInt(doc.get("capacityAdults"), 1));
                         int parsedPrice = asInt(doc.get("pricePerNight"), 0);
@@ -80,7 +81,10 @@ public final class RoomInventoryLoader {
                                 List<HotelRoom> rooms = new ArrayList<>();
                                 Map<String, Integer> labelCounts = new HashMap<>();
                                 for (RoomSeed seed : seeds) {
-                                    boolean booked = false;
+                                    boolean booked = occupied.contains(seed.bookingRoomId.toLowerCase(Locale.ROOT));
+                                    if ("occupied".equalsIgnoreCase(seed.housekeepingStatus)) {
+                                        booked = true;
+                                    }
                                     int duplicateCount = labelCounts.getOrDefault(seed.label, 0);
                                     labelCounts.put(seed.label, duplicateCount + 1);
                                     String safeLabel = duplicateCount == 0 ? seed.label : seed.label + " (" + (duplicateCount + 1) + ")";
@@ -132,6 +136,7 @@ public final class RoomInventoryLoader {
         String id;
         String bookingRoomId;
         String label;
+        String housekeepingStatus;
         int floor;
         int maxAdults;
         int pricePerNight;
